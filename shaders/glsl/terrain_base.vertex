@@ -1,0 +1,87 @@
+#version 300 es
+
+#pragma optimize(on)
+
+precision highp float;
+
+#include "shaderfunction.lin"
+
+uniform mat4 WORLDVIEWPROJ;
+uniform mat4 WORLD;
+uniform mat4 WORLDVIEW;
+uniform mat4 PROJ;
+uniform vec4 CHUNK_ORIGIN_AND_SCALE;
+uniform vec4 FOG_COLOR;
+uniform vec2 FOG_CONTROL;
+uniform float RENDER_DISTANCE;
+uniform float FAR_CHUNKS_DISTANCE;
+uniform float RENDER_CHUNK_FOG_ALPHA;
+uniform sampler2D TEXTURE_1;
+uniform sampler2D TEXTURE_2;
+
+in vec4 POSITION;
+in vec4 COLOR;
+in vec2 TEXCOORD_0;
+in vec2 TEXCOORD_1;
+
+centroid out vec2 uv0;
+out vec4 lig;
+#if FAST_FOG == 1
+out vec4 fogcol;
+#endif
+#if REDSTONE_POWER
+out vec4 col;
+#endif
+#if REDSTONE_POWER || CHUNK_BOUND
+out vec4 chupos;
+#endif
+
+void main()
+{
+#if REDSTONE_POWER
+	col = COLOR;
+#endif
+
+#if REDSTONE_POWER || CHUNK_BOUND
+	chupos = POSITION;
+#endif
+
+#ifdef AS_ENTITY_RENDERER
+	vec4 worpos = POSITION;
+#else
+	vec4 worpos = vec4(POSITION.xyz * CHUNK_ORIGIN_AND_SCALE.w + CHUNK_ORIGIN_AND_SCALE.xyz, 1.0);
+#endif
+
+	gl_Position = WORLDVIEWPROJ * worpos;
+
+#ifndef BYPASS_PIXEL_SHADER
+
+	uv0 = TEXCOORD_0;
+
+#ifdef SEASONS
+	lig = vec4(mix(vec3(1.0), texture(TEXTURE_2, COLOR.xy).rgb * 2.0, COLOR.z) * COLOR.w, 0.0);
+#else
+	lig = COLOR;
+#endif
+
+#if FAST_LIGHT == 1
+	lig *= texture(TEXTURE_1, TEXCOORD_1);
+#endif
+
+#if defined(FOG) && FAST_FOG == 1
+#ifdef FANCY
+	float len = length(worpos.xyz) / RENDER_DISTANCE;
+#else
+	float len = gl_Position.z / RENDER_DISTANCE;
+#endif
+#ifdef ALLOW_FADE
+	len += RENDER_CHUNK_FOG_ALPHA;
+#endif
+	fogcol.rgb = FOG_COLOR.rgb;
+	fogcol.a = saturate((len - FOG_CONTROL.x) / (FOG_CONTROL.y - FOG_CONTROL.x));
+#else
+	lig.rgb += FOG_COLOR.rgb * 0.000001;
+#endif
+
+#endif
+}
