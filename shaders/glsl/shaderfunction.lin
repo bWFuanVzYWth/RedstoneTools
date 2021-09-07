@@ -1,6 +1,68 @@
 #include "Users/Sets.txt"
 
-float saturate(float x)
-{
+//math
+float saturate(float x) {
     return clamp(x, 0.0, 1.0);
+}
+
+//redstone_power
+vec3 render_redstone_power(vec3 oc, vec3 rwc) {
+    return oc + rwc;
+}
+
+vec3 render_redstone_power(vec3 oc, vec3 ic, vec3 bp, sampler2D t) {
+    vec3 rwc = vec3(0.0);
+    if(ic.b < 0.001 && all(lessThan(abs(0.5 - bp.xz), vec2(2.0 / 16.0)))) {
+        int pw = int(max(0.0, (25.0 * ic.r - 9.5)));
+        ivec2 os = ivec2(pw * 32 + 8, 8);
+        ivec2 ruv = ivec2(bp.xz * 64.0 - 24.0);
+        vec4 num = texelFetch(t, ruv + os, 0);
+        rwc += num.rrr;
+    }
+    return render_redstone_power(oc, rwc);
+}
+
+//chunk_bound
+vec3 render_chunk_bound_x(vec3 cc) {
+    cc = mix(cc, CHUNK_BOUND_COLOR_X.rgb, CHUNK_BOUND_COLOR_X.a);
+    return cc;
+}
+
+vec3 render_chunk_bound_y(vec3 cc) {
+    cc = mix(cc, CHUNK_BOUND_COLOR_Y.rgb, CHUNK_BOUND_COLOR_Y.a);
+    return cc;
+}
+
+vec3 render_chunk_bound_z(vec3 cc) {
+    cc = mix(cc, CHUNK_BOUND_COLOR_Z.rgb, CHUNK_BOUND_COLOR_Z.a);
+    return cc;
+}
+
+vec3 render_chunk_bound_o(vec3 cc) {
+    cc = mix(cc, CHUNK_BOUND_COLOR_O.rgb, CHUNK_BOUND_COLOR_O.a);
+    return cc;
+}
+
+vec3 render_chunk_bound(vec3 oc, vec3 cp, vec3 N, vec3 bp) {
+    vec3 cc = vec3(0.0);
+    bvec3 cb = greaterThan(abs(8.0 - cp.xyz), vec3(8.0 - 1.5 / 16.0));
+    bvec3 bb = greaterThan(abs(0.5 - bp.xyz), vec3(0.5 - 0.5 / 16.0));
+    if((cb.x || cb.z) && (bb.x && bb.y || bb.y && bb.z || bb.z && bb.x)) {
+        bool flag = !(N.y > 0.9) && (cb.x && cb.y || cb.y && cb.z || cb.z && cb.x);
+        cc = (flag && (cb.x && cb.z)) ? render_chunk_bound_y(cc) : cc;
+        cc = (flag && (!cb.x && cb.z)) ? render_chunk_bound_x(cc) : cc;
+        cc = (flag && (cb.x && !cb.z)) ? render_chunk_bound_z(cc) : cc;
+        cc = (!flag || (!cb.x && !cb.z)) ? render_chunk_bound_o(cc) : cc;
+    }
+    return oc + cc;
+}
+
+//light_bound
+vec3 render_light_bound(vec3 outcol) {
+    return mix(outcol, LIGHT_BOUND_COLOR.rgb, LIGHT_BOUND_COLOR.a);
+}
+
+vec3 render_light_bound(vec3 outcol, vec2 uv1, vec3 N, vec3 blopos) {
+    bool lba = (uv1.x > 0.4375 && uv1.x < 0.498) && (N.y > 0.9) && any(greaterThan(abs(blopos.xz - 0.5), vec2(0.46875)));
+    return lba ? render_light_bound(outcol) : outcol.rgb;
 }
