@@ -1,18 +1,18 @@
 {
     "format_version": 2,
     "header": {
-        "description": "帧率优化+红石中常用的工具类材质",
-        "name": "RedstoneTools PE V1.0",
-        "uuid": "0575c61f-a5da-4b7f-9961-ffda29080106",
-        "version": [ 1, 0, 0 ],
+        "description": "帧率优化+红石中常用的工具类着色器",
+        "name": "RedstoneTools PE V1.2.2",
+        "uuid": "0575c61f-a5da-4b7f-9961-ffda29080110",
+        "version": [ 1, 2, 2 ],
         "min_engine_version": [ 1, 14, 0 ]
     },
     "modules": [
         {
             "description": "",
             "type": "resources",
-            "uuid": "53644fac-a276-42e5-843f-a3c6f1690106",
-            "version": [ 1, 0, 0 ]
+            "uuid": "53644fac-a276-42e5-843f-a3c6f1690110",
+            "version": [ 1, 2, 2 ]
         }
     ]
 }

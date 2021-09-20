@@ -6,6 +6,9 @@ precision highp float;
 
 #include "shaderfunction.lin"
 
+uniform sampler2D TEXTURE_1;
+uniform sampler2D TEXTURE_2;
+
 uniform mat4 WORLDVIEWPROJ;
 uniform mat4 WORLD;
 uniform mat4 WORLDVIEW;
@@ -16,8 +19,6 @@ uniform vec2 FOG_CONTROL;
 uniform float RENDER_DISTANCE;
 uniform float FAR_CHUNKS_DISTANCE;
 uniform float RENDER_CHUNK_FOG_ALPHA;
-uniform sampler2D TEXTURE_1;
-uniform sampler2D TEXTURE_2;
 
 in vec4 POSITION;
 in vec4 COLOR;
@@ -26,22 +27,16 @@ in vec2 TEXCOORD_1;
 
 centroid out vec2 uv0;
 out vec4 lig;
-#if FAST_FOG == 1
 out vec4 fogcol;
-#endif
-#if REDSTONE_POWER
 out vec4 col;
-#endif
-#if REDSTONE_POWER || CHUNK_BOUND
 out vec4 chupos;
-#endif
-
-#if LIGHT_MAP
 out vec2 uv1;
-flat out vec2 flat_uv1;
-#endif
 
 void main() {
+#if LAZY_CHUNK_LOAD && defined(ALLOW_FADE)
+	return;
+#else
+
 #if REDSTONE_POWER
 	col = COLOR;
 #endif
@@ -52,7 +47,6 @@ void main() {
 
 #if LIGHT_MAP
 	uv1 = TEXCOORD_1;
-	flat_uv1 = TEXCOORD_1;
 #endif
 
 #ifdef AS_ENTITY_RENDERER
@@ -62,8 +56,6 @@ void main() {
 #endif
 
 	gl_Position = WORLDVIEWPROJ * worpos;
-
-#ifndef BYPASS_PIXEL_SHADER
 
 	uv0 = TEXCOORD_0;
 
@@ -94,5 +86,5 @@ void main() {
 	lig.rgb += FOG_COLOR.rgb * 0.000001;
 #endif
 
-#endif
+#endif //LAZY_CHUNK_LOAD
 }

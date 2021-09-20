@@ -7,27 +7,22 @@ precision mediump float;
 #include "shaderfunction.lin"
 
 uniform sampler2D TEXTURE_0;
-uniform sampler2D TEXTURE_1;
 
 centroid in vec2 uv0;
 in vec4 lig;
-#if FAST_FOG == 1
 in vec4 fogcol;
-#endif
-#if REDSTONE_POWER
 in vec4 col;
-#endif
-#if REDSTONE_POWER || CHUNK_BOUND
 in vec4 chupos;
-#endif
-#if LIGHT_MAP
 in vec2 uv1;
-flat in vec2 flat_uv1;
-#endif
 
 out vec4 FragColor;
 
 void main() {
+#if LAZY_CHUNK_LOAD && defined(ALLOW_FADE)
+	FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+	return;
+#else
+
 #ifdef BYPASS_PIXEL_SHADER
 	FragColor = vec4(0.0, 0.0, 0.0, 0.0);
 	return;
@@ -77,5 +72,7 @@ void main() {
 
 	FragColor = outcol;
 
-#endif
+#endif //BYPASS_PIXEL_SHADER
+
+#endif //LAZY_CHUNK_LOAD
 }
