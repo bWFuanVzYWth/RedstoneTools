@@ -8,17 +8,16 @@ precision mediump float;
 
 uniform sampler2D TEXTURE_0;
 
-centroid in vec2 uv0;
 in vec4 lig;
-in vec4 fogcol;
 in vec4 col;
 in vec4 chupos;
-in vec2 uv1;
+centroid in vec2 uv0;
+centroid in vec2 uv1;
 
 out vec4 FragColor;
 
 void main() {
-#if LAZY_CHUNK_LOAD && defined(ALLOW_FADE)
+#if (LAZY_CHUNK_LOAD || !defined(FANCY)) && defined(ALLOW_FADE)
 	FragColor = vec4(0.0, 0.0, 0.0, 0.0);
 	return;
 #else
@@ -64,10 +63,6 @@ void main() {
 
 #if LIGHT_MAP == 1
 	outcol.rgb = render_light_bound(outcol.rgb, uv1, N, blopos);
-#endif
-
-#if defined(FANCY) && FAST_FOG == 1
-	outcol.rgb = mix(outcol.rgb, fogcol.rgb, fogcol.a);
 #endif
 
 	FragColor = outcol;

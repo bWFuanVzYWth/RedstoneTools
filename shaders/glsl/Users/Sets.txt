@@ -1,24 +1,22 @@
-#define FAST_LIGHT 2
+#define FAST_LIGHT 1
 //1 弱优化，使用顶点光照取代原版的片元光照
 //2 强优化，禁用光照，永久夜视
-
-#define FAST_FOG 2
-//1 弱优化，简化原版视距雾计算
-//2 强优化，禁用视距雾
+//关闭精美图像时强制使用2
 
 #define LAZY_CHUNK_LOAD 1
 //0 原版区块加载
-//1 延迟区块加载，以牺牲加载速度为代价提升跑图帧率
+//1 延迟区块加载，关闭精美画质时，尝试牺牲加载速度为代价提升跑图帧率
+//关闭精美图像时强制使用1
 
-#define REDSTONE_POWER 0
+#define REDSTONE_POWER 1
 //0 关闭红石能量显示
 //1 启用红石能量显示
 
-#define LIGHT_MAP 0
+#define LIGHT_MAP 1
 //0 关闭亮度显示
 //1 显示亮度分界线
 
-#define CHUNK_BOUND 0
+#define CHUNK_BOUND 1
 //0 关闭区块边界线
 //1 显示区块边界线
 
