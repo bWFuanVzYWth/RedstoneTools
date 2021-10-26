@@ -29,6 +29,46 @@
     },
     "redstone_dust_line": {
       "textures": "textures/RedstoneTools/redstone_dust_line"
+    },
+    "piston_inner_normal": {
+      "textures": [
+        "textures/Piston/piston_inner_normal"
+      ]
+    },
+    "piston_inner_sticky": {
+      "textures": [
+        "textures/Piston/piston_inner_sticky"
+      ]
+    },
+    "piston_top_normal": {
+      "textures": [
+        "textures/Piston/piston_top_normal"
+      ]
+    },
+    "piston_top_sticky": {
+      "textures": [
+        "textures/Piston/piston_top_sticky"
+      ]
+    },
+    "piston_side_normal": {
+      "textures": [
+        "textures/Piston/piston_side_normal"
+      ]
+    },
+    "piston_side_sticky": {
+      "textures": [
+        "textures/Piston/piston_side_sticky"
+      ]
+    },
+    "piston_bottom_normal": {
+      "textures": [
+        "textures/Piston/piston_bottom_normal"
+      ]
+    },
+    "piston_bottom_sticky": {
+      "textures": [
+        "textures/Piston/piston_bottom_sticky"
+      ]
     }
   }
 }

@@ -1,0 +1,39 @@
+{
+  "format_version": [
+    1,
+    1,
+    0
+  ],
+  "piston": {
+    "textures": {
+      "up": "piston_inner_normal",
+      "down": "piston_bottom_normal",
+      "side": "piston_side_normal"
+    },
+    "carried_textures": {
+      "up": "piston_top_normal",
+      "down": "piston_bottom_normal",
+      "side": "piston_side_normal"
+    },
+    "sound": "stone"
+  },
+  "sticky_piston": {
+    "textures": {
+      "up": "piston_inner_sticky",
+      "down": "piston_bottom_sticky",
+      "side": "piston_side_sticky"
+    },
+    "carried_textures": {
+      "up": "piston_top_sticky",
+      "down": "piston_bottom_sticky",
+      "side": "piston_side_sticky"
+    },
+    "sound": "stone"
+  },
+  "pistonArmCollision": {
+    "textures": "piston_top_normal"
+  },
+  "stickyPistonArmCollision": {
+    "textures": "piston_top_sticky"
+  }
+}
