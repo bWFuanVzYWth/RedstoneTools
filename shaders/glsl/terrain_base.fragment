@@ -12,7 +12,6 @@ in vec4 lig;
 in vec4 col;
 in vec4 chupos;
 centroid in vec2 uv0;
-centroid in vec2 uv1;
 
 out vec4 FragColor;
 
@@ -41,30 +40,18 @@ void main() {
 
 	vec4 outcol = texcol * lig;
 
-#if REDSTONE_POWER || CHUNK_BOUND || LIGHT_MAP
-	vec3 blopos = fract(chupos.xyz);
-#endif
-
-#if CHUNK_BOUND || LIGHT_MAP
-	vec4 ddxpos = dFdx(chupos);
-	vec4 ddypos = dFdy(chupos);
-	vec3 N = normalize(cross(ddxpos.xyz, ddypos.xyz));
-#endif
-
 #if defined(ALPHA_TEST) && !defined(SEASONS) && !defined(SEASONS_FAR) && !defined(BLEND)
 #if REDSTONE_POWER
+	vec3 blopos = fract(chupos.xyz);
 	outcol.rgb = render_redstone_power(outcol.rgb, col.rgb, blopos.xyz, TEXTURE_0);
 #endif
 #endif
 
 #if CHUNK_BOUND
-	outcol.rgb = render_chunk_bound(outcol.rgb, chupos.xyz, N, blopos.xyz);
+ 	outcol.rgb = render_chunk_bound(outcol.rgb, chupos.xyz);
 #endif
 
-#if LIGHT_MAP == 1
-	outcol.rgb = render_light_bound(outcol.rgb, uv1, N, blopos);
-#endif
-
+	// outcol.rgb = chupos.xyz;
 	FragColor = outcol;
 
 #endif //BYPASS_PIXEL_SHADER
