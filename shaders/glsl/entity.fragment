@@ -1,0 +1,231 @@
+#version 300 es
+precision mediump float;
+
+#include "shaderfunction.lin"
+
+#ifdef MSAA_FRAMEBUFFER_ENABLED
+#define _centroid centroid
+#else
+#define _centroid
+#endif
+
+_centroid in vec2 uv;
+
+#define texture2D texture
+out vec4 FragColor;
+#define gl_FragColor FragColor
+
+uniform vec4 OVERLAY_COLOR;
+uniform vec4 TILE_LIGHT_COLOR;
+uniform vec4 CHANGE_COLOR;
+uniform vec4 GLINT_COLOR;
+uniform vec4 UV_ANIM;
+uniform vec2 UV_OFFSET;
+uniform vec2 UV_ROTATION;
+uniform vec2 GLINT_UV_SCALE;
+uniform vec4 MULTIPLICATIVE_TINT_CHANGE_COLOR;
+
+#if __VERSION__ >= 420
+#define LAYOUT_BINDING(x) layout(binding = x)
+#else
+#define LAYOUT_BINDING(x)
+#endif
+
+uniform vec4 CURRENT_COLOR;
+uniform vec4 DARKEN;
+uniform vec3 TEXTURE_DIMENSIONS;
+uniform float HUD_OPACITY;
+uniform MAT4 UV_TRANSFORM;
+
+#if !defined(TEXEL_AA) || !defined(TEXEL_AA_FEATURE)
+#define USE_TEXEL_AA 0
+#else
+#define USE_TEXEL_AA 1
+#endif
+
+#ifdef ALPHA_TEST
+#define USE_ALPHA_TEST 1
+#else
+#define USE_ALPHA_TEST 0
+#endif
+
+#if __VERSION__ >= 300
+
+#if USE_TEXEL_AA
+
+const float TEXEL_AA_LOD_CONSERVATIVE = -1.0;
+const float TEXEL_AA_LOD_RELAXED = 2.0;
+
+#endif // USE_TEXEL_AA
+
+#endif //__VERSION__ >= 300
+
+LAYOUT_BINDING(0) uniform sampler2D TEXTURE_0;
+LAYOUT_BINDING(1) uniform sampler2D TEXTURE_1;
+
+#ifdef USE_MULTITEXTURE
+	LAYOUT_BINDING(2) uniform sampler2D TEXTURE_2;
+#endif
+
+in vec4 light;
+
+#ifdef COLOR_BASED
+	in vec4 vertColor;
+#endif
+
+#ifdef USE_OVERLAY
+    // When drawing horses on specific android devices, overlay color ends up being garbage data.
+    // Changing overlay color to high precision appears to fix the issue on devices tested
+	in vec4 overlayColor;
+#endif
+
+#ifdef TINTED_ALPHA_TEST
+	in float alphaTestMultiplier;
+#endif
+
+#ifdef GLINT
+	in vec4 layerUV;
+	// in vec2 layer1UV;
+	// in vec2 layer2UV;
+	in vec4 tileLightColor;
+	in vec4 glintColor;
+#endif
+
+vec4 glintBlend(vec4 dest, vec4 source) {
+	// glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE, GL_ONE, GL_ZERO)
+	return vec4(source.rgb * source.rgb, source.a) + vec4(dest.rgb, 0.0);
+}
+
+#ifdef USE_EMISSIVE
+#ifdef USE_ONLY_EMISSIVE
+#define NEEDS_DISCARD(C) (C.a == 0.0 || C.a == 1.0 )
+#else
+#define NEEDS_DISCARD(C) (C.a + C.r + C.g + C.b == 0.0)
+#endif
+#else
+#ifndef USE_COLOR_MASK
+#define NEEDS_DISCARD(C) (C.a < 0.5)
+#else
+#define NEEDS_DISCARD(C) (C.a == 0.0)
+#endif
+#endif
+
+void main()
+{
+	vec4 color = vec4(1.0);
+
+#ifndef NO_TEXTURE
+	color = texture2D( TEXTURE_0, uv );
+
+#ifdef MASKED_MULTITEXTURE
+	vec4 tex1 = texture2D( TEXTURE_1, uv );
+
+	// If tex1 has a non-black color and no alpha, use color; otherwise use tex1
+	float maskedTexture = ceil( ( tex1.r + tex1.g + tex1.b ) * ( 1.0 - tex1.a ) );
+	color = mix(tex1, color, clamp(maskedTexture, 0.0, 1.0));
+#endif // MASKED_MULTITEXTURE
+
+#if defined(ALPHA_TEST) && !defined(USE_MULTITEXTURE) && !defined(MULTIPLICATIVE_TINT)
+	if(NEEDS_DISCARD(color))
+		discard;
+#endif // ALPHA_TEST
+
+#ifdef TINTED_ALPHA_TEST
+vec4 testColor = color;
+testColor.a *= alphaTestMultiplier;
+	if(NEEDS_DISCARD(testColor))
+		discard;
+#endif // TINTED_ALPHA_TEST
+#endif // NO_TEXTURE
+
+#ifdef COLOR_BASED
+	color *= vertColor;
+#endif
+
+#ifdef MULTI_COLOR_TINT
+	// Texture is a mask for tinting with two colors
+	vec2 colorMask = color.rg;
+
+	// Apply the base color tint
+	color.rgb = colorMask.rrr * CHANGE_COLOR.rgb;
+
+	// Apply the secondary color mask and tint so long as its grayscale value is not 0
+	color.rgb = mix(color, colorMask.gggg * MULTIPLICATIVE_TINT_CHANGE_COLOR, ceil(colorMask.g)).rgb;
+#else
+
+#ifdef USE_COLOR_MASK
+	color.rgb = mix(color.rgb, color.rgb*CHANGE_COLOR.rgb, color.a);
+	color.a *= CHANGE_COLOR.a;
+#endif
+
+#ifdef ITEM_IN_HAND
+	color.rgb = mix(color.rgb, color.rgb*CHANGE_COLOR.rgb, vertColor.a);
+#endif // MULTI_COLOR_TINT
+
+#endif
+
+#ifdef USE_MULTITEXTURE
+	vec4 tex1 = texture2D( TEXTURE_1, uv );
+	vec4 tex2 = texture2D( TEXTURE_2, uv );
+	color.rgb = mix(color.rgb, tex1.rgb, tex1.a);
+#ifdef ALPHA_TEST
+	if (color.a < 0.5 && tex1.a == 0.0) {
+		discard;
+	}
+#endif
+
+#ifdef COLOR_SECOND_TEXTURE
+	if (tex2.a > 0.0) {
+		color.rgb = tex2.rgb + (tex2.rgb * CHANGE_COLOR.rgb - tex2.rgb)*tex2.a;//lerp(tex2.rgb, tex2 * changeColor.rgb, tex2.a)
+	}
+#else
+	color.rgb = mix(color.rgb, tex2.rgb, tex2.a);
+#endif
+#endif
+
+#ifdef MULTIPLICATIVE_TINT
+	vec4 tintTex = texture2D(TEXTURE_1, uv);
+#ifdef MULTIPLICATIVE_TINT_COLOR
+	tintTex.rgb = tintTex.rgb * MULTIPLICATIVE_TINT_CHANGE_COLOR.rgb;
+#endif
+
+#ifdef ALPHA_TEST
+	color.rgb = mix(color.rgb, tintTex.rgb, tintTex.a);
+	if (color.a + tintTex.a <= 0.0) {
+		discard;
+	}
+#endif
+
+#endif
+
+#ifdef USE_OVERLAY
+	//use either the diffuse or the OVERLAY_COLOR
+	color.rgb = mix(color, overlayColor, overlayColor.a).rgb;
+#endif
+
+// 夜视
+#if !(FAST_LIGHT >= 2 || !defined(FANCY))
+#ifdef USE_EMISSIVE
+	//make glowy stuff
+	color *= mix(vec4(1.0), light, color.a );
+#else
+	color *= light;
+#endif
+#endif
+
+#ifdef GLINT
+	// Applies color mask to glint texture instead and blends with original color
+	vec4 layer1 = texture2D(TEXTURE_1, fract(layerUV.xy)).rgbr * glintColor;
+	vec4 layer2 = texture2D(TEXTURE_1, fract(layerUV.zw)).rgbr * glintColor;
+	vec4 glint = (layer1 + layer2) * tileLightColor;
+
+	color = glintBlend(color, glint);
+#endif
+
+	//WARNING do not refactor this
+#ifdef UI_ENTITY
+	color.a *= HUD_OPACITY;
+#endif
+
+	gl_FragColor = color;
+}
